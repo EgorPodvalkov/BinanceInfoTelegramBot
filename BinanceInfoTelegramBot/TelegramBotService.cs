@@ -12,7 +12,9 @@ namespace BinanceInfoTelegramBot
         public async Task StartAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("TelegramBotService starts at: {time}", DateTimeOffset.Now);
-            await Task.Delay(1000, stoppingToken);
+
+            var bot = new BinanceTBot(_logger);
+            await bot.Run();
         }
 
         public async Task StopAsync(CancellationToken stoppingToken)
