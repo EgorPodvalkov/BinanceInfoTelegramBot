@@ -61,7 +61,12 @@ namespace BinanceInfoTelegramBot
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                _logger.LogError(ex.ToString());
+                if (TelegramBotSettings.LogChatID is null)
+                    return;
+
+                var message = string.Format("#Log #Error #InnerError \n{1} \n{0}", ex.StackTrace, update.Message?.Text ?? "No message");
+                await _botClient.SendTextMessageAsync(TelegramBotSettings.LogChatID, message);
             }
         }
 

@@ -1,4 +1,7 @@
-﻿using BinanceInfoTelegramBot.Settings;
+﻿using BinanceInfoTelegramBot.Classes;
+using BinanceInfoTelegramBot.Settings;
+using Newtonsoft.Json;
+using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -62,19 +65,64 @@ namespace BinanceInfoTelegramBot.Handlers
 
         private async Task P2pBuyCommand(string text)
         {
+            var parametrs = new BuySellParametrs(text);
+            var request = new P2pSearchRequest
+            {
+                TradeType = e_TradeType.BUY,
+                Asset = parametrs.Asset,
+                TransAmount = parametrs.TransAmount,
+                PayTypes = parametrs.PayTypes,
+            };
 
+            var response = await BinanceP2pSearch(request);
+
+
+            await _botClient.SendTextMessageAsync(_chatId, response.Orders?.FirstOrDefault()?.OrderDetail.Price.ToString() ?? "No orders");
+            if (response?.Orders?.FirstOrDefault() is null)
+                throw new Exception(text);
         }
 
         private async Task P2pSellCommand(string text)
         {
+            var parametrs = new BuySellParametrs(text);
+            var request = new P2pSearchRequest
+            {
+                TradeType = e_TradeType.SELL,
+                Asset = parametrs.Asset,
+                TransAmount = parametrs.TransAmount,
+                PayTypes = parametrs.PayTypes,
+            };
 
+            var response = await BinanceP2pSearch(request);
+
+            await _botClient.SendTextMessageAsync(_chatId, response.Orders?.FirstOrDefault()?.OrderDetail.Price.ToString() ?? "No orders");
+            if (response?.Orders?.FirstOrDefault() is null)
+                throw new Exception(text);
+        }
+
+        private async Task<P2pSearchResponse?> BinanceP2pSearch(P2pSearchRequest data)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                const string Url = @"https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search";
+
+                var json = JsonConvert.SerializeObject(data);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await httpClient.PostAsync(Url, content);
+
+                var resultJson = await response.Content.ReadAsStringAsync();
+
+                var result = JsonConvert.DeserializeObject<P2pSearchResponse>(resultJson);
+                return result;
+            }
         }
 
         private async Task P2pProblemCommand(string text)
         {
             if (TelegramBotSettings.LogChatID is null)
                 return;
-            var message = string.Format("#botProblem \n {0}: {1}", _senderName, text);
+            var message = string.Format("#Log #BotProblem \n {0}: {1}", _senderName, text);
             var success = await _botClient.SendTextMessageAsync(TelegramBotSettings.LogChatID, message, parseMode: ParseMode.Markdown) is not null;
 
             if (success && TelegramBotSettings.ProblemCommandMessage is not null)
