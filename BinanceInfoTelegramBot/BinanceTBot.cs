@@ -20,41 +20,35 @@ namespace BinanceInfoTelegramBot
         public BinanceTBot(ILogger<TelegramBotService> logger)
         {
             var token = TelegramBotSettings.Token;
-            _botClient = new TelegramBotClient(token); // Присваиваем нашей переменной значение, в параметре передаем Token, полученный от BotFather
-            _receiverOptions = new ReceiverOptions // Также присваем значение настройкам бота
+            _botClient = new TelegramBotClient(token);
+            _receiverOptions = new ReceiverOptions
             {
-                AllowedUpdates = new[] // Тут указываем типы получаемых Update`ов, о них подробнее расказано тут https://core.telegram.org/bots/api#update
+                AllowedUpdates = new[]
                 {
-                    UpdateType.Message, // Сообщения (текст, фото/видео, голосовые/видео сообщения и т.д.)
+                    UpdateType.Message,
                 },
-                // Параметр, отвечающий за обработку сообщений, пришедших за то время, когда ваш бот был оффлайн
-                // True - не обрабатывать, False (стоит по умолчанию) - обрабаывать
                 ThrowPendingUpdates = true,
             };
             _logger = logger;
         }
 
         /// <summary>
-        /// Запускает бота
+        /// Bot running
         /// </summary>
         public async Task Run()
         {
             using var cts = new CancellationTokenSource();
 
-            // UpdateHander - обработчик приходящих Update`ов
-            // ErrorHandler - обработчик ошибок, связанных с Bot API
-            _botClient.StartReceiving(UpdateHandler, ErrorHandler, _receiverOptions, cts.Token); // Запускаем бота
+            _botClient.StartReceiving(UpdateHandler, ErrorHandler, _receiverOptions, cts.Token);
 
-            var me = await _botClient.GetMeAsync(); // Создаем переменную, в которую помещаем информацию о нашем боте.
+            var me = await _botClient.GetMeAsync();
             _logger.LogInformation($"{me.FirstName} запущен!");
         }
 
         private async Task UpdateHandler(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
-            // Обязательно ставим блок try-catch, чтобы наш бот не "падал" в случае каких-либо ошибок
             try
             {
-                // Сразу же ставим конструкцию switch, чтобы обрабатывать приходящие Update
                 switch (update.Type)
                 {
                     case UpdateType.Message:
@@ -73,11 +67,9 @@ namespace BinanceInfoTelegramBot
 
         private Task ErrorHandler(ITelegramBotClient botClient, Exception error, CancellationToken cancellationToken)
         {
-            // Тут создадим переменную, в которую поместим код ошибки и её сообщение 
             var ErrorMessage = error switch
             {
-                ApiRequestException apiRequestException
-                    => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
+                ApiRequestException apiRequestException => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
                 _ => error.ToString()
             };
 
