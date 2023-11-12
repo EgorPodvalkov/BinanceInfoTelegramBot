@@ -1,5 +1,5 @@
-﻿using BinanceInfoTelegramBot.Handlers;
-using BinanceInfoTelegramBot.Settings;
+﻿using BinanceInfoTelegramBot.AppSettings;
+using BinanceInfoTelegramBot.Handlers;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
@@ -8,7 +8,7 @@ using Telegram.Bot.Types.Enums;
 
 namespace BinanceInfoTelegramBot
 {
-    public class BinanceTBot
+    public class BinanceTGBot
     {
         private readonly ITelegramBotClient _botClient;
         private readonly ReceiverOptions _receiverOptions;
@@ -17,9 +17,9 @@ namespace BinanceInfoTelegramBot
         /// <summary>
         /// Возвращает сконфигурированого бота
         /// </summary>
-        public BinanceTBot(ILogger<TelegramBotService> logger)
+        public BinanceTGBot(ILogger<TelegramBotService> logger)
         {
-            var token = TelegramBotSettings.Token;
+            var token = TGBotSettings.Token;
             _botClient = new TelegramBotClient(token);
             _receiverOptions = new ReceiverOptions
             {
@@ -62,11 +62,11 @@ namespace BinanceInfoTelegramBot
             catch (Exception ex)
             {
                 _logger.LogError(ex.ToString());
-                if (TelegramBotSettings.LogChatID is null)
+                if (TGBotSettings.LogChatID is null)
                     return;
 
-                var message = string.Format("#Log #Error #InnerError \n{1} \n{0}", ex.StackTrace, update.Message?.Text ?? "No message");
-                await _botClient.SendTextMessageAsync(TelegramBotSettings.LogChatID, message);
+                var message = string.Format("#Log #Error #InnerError \n{1} \n{0}", ex.StackTrace, update.Message?.Text ?? "<No message>");
+                await _botClient.SendTextMessageAsync(TGBotSettings.LogChatID, message);
             }
         }
 

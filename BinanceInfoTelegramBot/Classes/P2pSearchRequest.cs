@@ -1,4 +1,4 @@
-﻿using BinanceInfoTelegramBot.Settings;
+﻿using BinanceInfoTelegramBot.AppSettings;
 using System.Text.Json.Serialization;
 
 namespace BinanceInfoTelegramBot.Classes
@@ -23,7 +23,7 @@ namespace BinanceInfoTelegramBot.Classes
 
         /// <summary> Fiat </summary>
         [JsonPropertyName("fiat")]
-        public string Fiat { get; set; } = TelegramBotSettings.Fiat;
+        public string Fiat { get; set; } = TGBotSettings.Fiat;
 
         /// <summary> Fiat amount </summary>
         [JsonPropertyName("transAmount")]

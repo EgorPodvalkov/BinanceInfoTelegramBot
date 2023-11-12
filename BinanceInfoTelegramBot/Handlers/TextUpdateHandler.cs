@@ -1,5 +1,5 @@
-﻿using BinanceInfoTelegramBot.Classes;
-using BinanceInfoTelegramBot.Settings;
+﻿using BinanceInfoTelegramBot.AppSettings;
+using BinanceInfoTelegramBot.Classes;
 using Newtonsoft.Json;
 using System.Text;
 using Telegram.Bot;
@@ -61,7 +61,7 @@ namespace BinanceInfoTelegramBot.Handlers
         }
 
         private async Task P2pInfoCommand(string text) => await
-            _botClient.SendTextMessageAsync(_chatId, TelegramBotSettings.InfoCommandMessage, parseMode: ParseMode.Markdown);
+            _botClient.SendTextMessageAsync(_chatId, TGMessageTemplates.InfoCommandMessage, parseMode: ParseMode.Markdown);
 
         private async Task P2pBuyCommand(string text)
         {
@@ -76,10 +76,20 @@ namespace BinanceInfoTelegramBot.Handlers
 
             var response = await BinanceP2pSearch(request);
 
+            try
+            {
+                await _botClient.SendTextMessageAsync(_chatId, TGMessageTemplates.GetBuyOrderMessage(response), parseMode: ParseMode.Markdown);
 
-            await _botClient.SendTextMessageAsync(_chatId, response.Orders?.FirstOrDefault()?.OrderDetail.Price.ToString() ?? "No orders");
-            if (response?.Orders?.FirstOrDefault() is null)
-                throw new Exception(text);
+                if (TGBotSettings.LogChatID is not null && !response.Success)
+                {
+                    var errMessage = string.Format("#Log #Error #BinanceError\n{0}\n{1}: {2}.", text, response.Message, response.MessageDetail);
+                    await _botClient.SendTextMessageAsync(TGBotSettings.LogChatID, errMessage, parseMode: ParseMode.Markdown);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format("{0}\nResponse: {1}", ex, JsonConvert.SerializeObject(response)));
+            }
         }
 
         private async Task P2pSellCommand(string text)
@@ -94,13 +104,23 @@ namespace BinanceInfoTelegramBot.Handlers
             };
 
             var response = await BinanceP2pSearch(request);
+            try
+            {
+                await _botClient.SendTextMessageAsync(_chatId, TGMessageTemplates.GetSellOrderMessage(response), parseMode: ParseMode.Markdown);
 
-            await _botClient.SendTextMessageAsync(_chatId, response.Orders?.FirstOrDefault()?.OrderDetail.Price.ToString() ?? "No orders");
-            if (response?.Orders?.FirstOrDefault() is null)
-                throw new Exception(text);
+                if (TGBotSettings.LogChatID is not null && !response.Success)
+                {
+                    var errMessage = string.Format("#Log #Error #BinanceError\n{0}\n{1}: {2}.", text, response.Message, response.MessageDetail);
+                    await _botClient.SendTextMessageAsync(TGBotSettings.LogChatID, errMessage, parseMode: ParseMode.Markdown);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format("{0}\nResponse: {1}", ex, JsonConvert.SerializeObject(response)));
+            }
         }
 
-        private async Task<P2pSearchResponse?> BinanceP2pSearch(P2pSearchRequest data)
+        private async Task<P2pSearchResponse> BinanceP2pSearch(P2pSearchRequest data)
         {
             using (var httpClient = new HttpClient())
             {
@@ -114,19 +134,20 @@ namespace BinanceInfoTelegramBot.Handlers
                 var resultJson = await response.Content.ReadAsStringAsync();
 
                 var result = JsonConvert.DeserializeObject<P2pSearchResponse>(resultJson);
-                return result;
+
+                return result ?? new P2pSearchResponse { Message = "No binance answer" };
             }
         }
 
         private async Task P2pProblemCommand(string text)
         {
-            if (TelegramBotSettings.LogChatID is null)
+            if (TGBotSettings.LogChatID is null)
                 return;
             var message = string.Format("#Log #BotProblem \n {0}: {1}", _senderName, text);
-            var success = await _botClient.SendTextMessageAsync(TelegramBotSettings.LogChatID, message, parseMode: ParseMode.Markdown) is not null;
+            var success = await _botClient.SendTextMessageAsync(TGBotSettings.LogChatID, message, parseMode: ParseMode.Markdown) is not null;
 
-            if (success && TelegramBotSettings.ProblemCommandMessage is not null)
-                await _botClient.SendTextMessageAsync(_chatId, TelegramBotSettings.ProblemCommandMessage, parseMode: ParseMode.Markdown);
+            if (success && TGMessageTemplates.ProblemCommandMessage is not null)
+                await _botClient.SendTextMessageAsync(_chatId, TGMessageTemplates.ProblemCommandMessage, parseMode: ParseMode.Markdown);
         }
     }
 }

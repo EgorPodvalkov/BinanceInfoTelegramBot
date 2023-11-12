@@ -34,6 +34,9 @@ namespace BinanceInfoTelegramBot.Classes
         [JsonProperty("price")]
         public decimal Price { get; set; }
 
+        [JsonProperty("asset")]
+        public string Crypto { get; set; }
+
         [JsonProperty("fiatSymbol")]
         public string FiatSymbol { get; set; }
 

@@ -13,7 +13,7 @@ namespace BinanceInfoTelegramBot
         {
             _logger.LogInformation("TelegramBotService starts at: {time}", DateTimeOffset.Now);
 
-            var bot = new BinanceTBot(_logger);
+            var bot = new BinanceTGBot(_logger);
             await bot.Run();
         }
 
